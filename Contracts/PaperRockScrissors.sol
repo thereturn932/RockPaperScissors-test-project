@@ -4,14 +4,14 @@ pragma solidity ^0.8.0;
 
 /*
 
-You will create a smart contract named `RockPaperScissors` whereby:  
-Alice and Bob can play the classic game of rock, paper, scissors using ERC20 (of your choosing).    
-  
-- To enroll, each player needs to deposit the right token amount, possibly zero.  
-- To play, each Bob and Alice need to submit their unique move.  
-- The contract decides and rewards the winner with all token wagered.  
+You will create a smart contract named `RockPaperScissors` whereby:
+Alice and Bob can play the classic game of rock, paper, scissors using ERC20 (of your choosing).
 
-There are many ways to implement this, so we leave that up to you.  
+- To enroll, each player needs to deposit the right token amount, possibly zero.
+- To play, each Bob and Alice need to submit their unique move.
+- The contract decides and rewards the winner with all token wagered.
+
+There are many ways to implement this, so we leave that up to you.
 */
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -61,8 +61,8 @@ contract RockPaperScissors {
         else
             return 0;
     }
-    
-    function ResetMoves(address player1, address player2) external {
+
+    function ResetMoves(address player1, address player2) internal {
         moveMade[player1] = false;
         moveMade[player2] = false;
     }
@@ -84,10 +84,11 @@ contract RockPaperScissors {
             to = player2;
         }
         else
-            revert("Not Found");
+            revert("Draw");
         token.transferFrom(from, to, bet[from]);
+        ResetMoves(player1,player2);
     }
 
-    
+
 
 }
