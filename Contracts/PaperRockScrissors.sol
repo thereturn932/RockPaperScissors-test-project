@@ -19,6 +19,7 @@ import "hardhat/console.sol";
 contract RockPaperScissors {
 
     event GameCreated(uint gameID, uint deadline);
+    event GameFilled(uint gameID);
     event GameFinished(uint gameID, address winner);
 
     address private owner;
@@ -63,6 +64,8 @@ contract RockPaperScissors {
         require(_games[_gameID].player2 == 0x0000000000000000000000000000000000000000);
         token.transferFrom(msg.sender, address(this), _games[_gameID].bet);
         _games[_gameID].player2 = msg.sender;
+
+        emit GameFilled(_gameID);
     }
 
     function PlayRock(uint _gameID) external {
