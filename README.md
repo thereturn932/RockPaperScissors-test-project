@@ -12,12 +12,13 @@ There are many ways to implement this, so we leave that up to you.
 ## Stretch Goals
 Nice to have, but not necessary.
 - Make it a utility whereby any 2 people can decide to play against each other.  
-    People can use Game ID to join another persons game.
-
+    
+    <em>People can use Game ID to join another persons game.</em>
 - Reduce gas costs as much as possible.
 - Let players bet their previous winnings.
 - How can you entice players to play, knowing that they may have their funds stuck in the contract if they face an uncooperative player? 
-    A deadline is entered by created of the game. If time exceeds and one of the players does not make any move, tokens return back to users.
+    
+    <em>A deadline is entered by created of the game. If time exceeds and one of the players does not make any move, tokens return back to users.</em>
 - Include any tests using Hardhat.
   
 Now fork this repo and do it!
@@ -39,3 +40,9 @@ Then code can be test by running
 ```shell
 npx hardhat test
 ```
+
+##TO-DO
+
+1. Create a interface to play the game. (Create game, join game)
+2. Write better tests
+3. Write a backend to hide player moves in contract. (To prevent people reading contract to find their opponents move.)
