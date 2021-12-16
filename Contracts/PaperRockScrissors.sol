@@ -14,81 +14,132 @@ Alice and Bob can play the classic game of rock, paper, scissors using ERC20 (of
 There are many ways to implement this, so we leave that up to you.
 */
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "hardhat/console.sol";
 
 contract RockPaperScissors {
 
+    event GameCreated(uint gameID, uint deadline);
+    event GameFinished(uint gameID, address winner);
+
     address private owner;
-    mapping(address => string) public move;
+    
     mapping(address => bool) public moveMade;
     mapping(address => uint) public bet;
     IERC20 private token;
 
+    struct Game{
+        address player1;
+        address player2;
+        string moveP1;
+        string moveP2;
+        uint bet;
+        uint gameID;
+        uint deadline;
+    }
 
-   constructor(IERC20 _token) {
+    uint GameNo = 0;
+    mapping(uint => Game) private _games;
+
+   constructor(address _token) {
         owner = msg.sender;
-        token = _token;
+        token = IERC20(_token);
     }
 
-    function PlayRock() external {
-        move[msg.sender] = "Rock";
-        moveMade[msg.sender] = true;
+    function CreateGame(uint _bet, uint time) external {
+        assert(0x0000000000000000000000000000000000000000 != msg.sender);
+        require(time <= 30 * 60, "Game should finish in 30 minutes");
+        GameNo++;
+        uint GameID = GameNo;
+        _games[GameID].player1 = msg.sender;
+        _games[GameID].player2 = 0x0000000000000000000000000000000000000000;
+        _games[GameID].bet = _bet;
+        _games[GameID].gameID = GameID;
+        _games[GameID].deadline = block.timestamp + time;
+        token.transferFrom(msg.sender, address(this), _bet);
+        emit GameCreated(_games[GameID].gameID, _games[GameID].deadline);
     }
 
-    function PlayPaper() external {
-        move[msg.sender] = "Paper";
-        moveMade[msg.sender] = true;
+    function JoinGame(uint _gameID) external {
+        require(_games[_gameID].player2 == 0x0000000000000000000000000000000000000000);
+        token.transferFrom(msg.sender, address(this), _games[_gameID].bet);
+        _games[_gameID].player2 = msg.sender;
     }
 
-    function PlayScissors() external {
-        move[msg.sender] = "Scissors";
-        moveMade[msg.sender] = true;
-    }
-
-    function FindWinner(address player1, address player2) internal view returns (uint8 result) {
-        require(moveMade[player1] == true && moveMade[player2] == true);
-        if(keccak256(abi.encodePacked((move[player1]))) == keccak256(abi.encodePacked(("Rock")))  && keccak256(abi.encodePacked((move[player2]))) == keccak256(abi.encodePacked(("Scissors"))))
-            return 1;
-        if(keccak256(abi.encodePacked((move[player1]))) == keccak256(abi.encodePacked(("Rock")))  && keccak256(abi.encodePacked((move[player2]))) == keccak256(abi.encodePacked(("Paper"))))
-            return 2;
-        if(keccak256(abi.encodePacked((move[player1]))) == keccak256(abi.encodePacked(("Paper")))  && keccak256(abi.encodePacked((move[player2]))) == keccak256(abi.encodePacked(("Rock"))))
-            return 1;
-        if(keccak256(abi.encodePacked((move[player1]))) == keccak256(abi.encodePacked(("Paper")))  && keccak256(abi.encodePacked((move[player2]))) == keccak256(abi.encodePacked(("Scissors"))))
-            return 2;
-        if(keccak256(abi.encodePacked((move[player1]))) == keccak256(abi.encodePacked(("Scissors")))  && keccak256(abi.encodePacked((move[player2]))) == keccak256(abi.encodePacked(("Rock"))))
-            return 2;
-        if(keccak256(abi.encodePacked((move[player1]))) == keccak256(abi.encodePacked(("Scissors")))  && keccak256(abi.encodePacked((move[player2]))) == keccak256(abi.encodePacked(("Paper"))))
-            return 1;
-        else
-            return 0;
-    }
-
-    function ResetMoves(address player1, address player2) internal {
-        moveMade[player1] = false;
-        moveMade[player2] = false;
-    }
-
-    function Bet(uint _bet) external{
-        bet[msg.sender] = _bet;
-    }
-
-    function TransferMoney(address player1, address player2) external{
-        uint8 result = FindWinner(player1, player2);
-        address from;
-        address to;
-        if(result == 1){
-            from = player2;
-            to = player1;
-            }
-        if(result == 2){
-            from = player1;
-            to = player2;
+    function PlayRock(uint _gameID) external {
+        if(msg.sender == _games[_gameID].player1){
+            _games[_gameID].moveP1 = "Rock";
         }
-        else
-            revert("Draw");
-        token.transferFrom(from, to, bet[from]);
-        ResetMoves(player1,player2);
+        else {
+            require(msg.sender == _games[_gameID].player2);
+            _games[_gameID].moveP2 = "Rock";
+        }
     }
 
+    function PlayPaper(uint _gameID) external {
+        if(msg.sender == _games[_gameID].player1){
+            _games[_gameID].moveP1 = "Paper";
+        }
+        else {
+            require(msg.sender == _games[_gameID].player2);
+            _games[_gameID].moveP2 = "Paper";
+        }
+    }
 
+    function PlayScissors(uint _gameID) external {
+        if(msg.sender == _games[_gameID].player1){
+            _games[_gameID].moveP1 = "Scissors";
+        }
+        else {
+            require(msg.sender == _games[_gameID].player2);
+            _games[_gameID].moveP2 = "Scissors";
+        }
+    }
 
+    function FindWinner(uint _gameID) external {
+        address winner = 0x0000000000000000000000000000000000000000;
+        require(_games[_gameID].deadline <= block.timestamp);
+        if(keccak256(abi.encodePacked(_games[_gameID].moveP1)) == keccak256(abi.encodePacked("")) || keccak256(abi.encodePacked(_games[_gameID].moveP1)) == keccak256(abi.encodePacked(""))) {
+            token.transfer(_games[_gameID].player1, _games[_gameID].bet);
+            token.transfer(_games[_gameID].player2, _games[_gameID].bet);
+            emit GameFinished(_gameID, winner);
+            return;
+        }
+        else {
+            if(keccak256(abi.encodePacked((_games[_gameID].moveP1))) == keccak256(abi.encodePacked(("Rock")))  && keccak256(abi.encodePacked((_games[_gameID].moveP2))) == keccak256(abi.encodePacked(("Scissors"))))
+            {
+                token.transfer(_games[_gameID].player1, _games[_gameID].bet*2);
+                winner = _games[_gameID].player1;
+            }
+            if(keccak256(abi.encodePacked((_games[_gameID].moveP1))) == keccak256(abi.encodePacked(("Rock")))  && keccak256(abi.encodePacked((_games[_gameID].moveP2))) == keccak256(abi.encodePacked(("Paper"))))
+            {
+                token.transfer(_games[_gameID].player2, _games[_gameID].bet*2);
+                winner = _games[_gameID].player2;
+            }
+            if(keccak256(abi.encodePacked((_games[_gameID].moveP1))) == keccak256(abi.encodePacked(("Paper")))  && keccak256(abi.encodePacked((_games[_gameID].moveP2))) == keccak256(abi.encodePacked(("Rock"))))
+            {
+                token.transfer(_games[_gameID].player1, _games[_gameID].bet*2);
+                winner = _games[_gameID].player1;
+            }
+            if(keccak256(abi.encodePacked((_games[_gameID].moveP1))) == keccak256(abi.encodePacked(("Paper")))  && keccak256(abi.encodePacked((_games[_gameID].moveP2))) == keccak256(abi.encodePacked(("Scissors"))))
+            {
+                token.transfer(_games[_gameID].player2, _games[_gameID].bet*2);
+                winner = _games[_gameID].player2;
+            }
+            if(keccak256(abi.encodePacked((_games[_gameID].moveP1))) == keccak256(abi.encodePacked(("Scissors")))  && keccak256(abi.encodePacked((_games[_gameID].moveP2))) == keccak256(abi.encodePacked(("Rock"))))
+            {   
+                token.transfer(_games[_gameID].player2, _games[_gameID].bet*2);
+                winner = _games[_gameID].player2;
+            }
+            if(keccak256(abi.encodePacked((_games[_gameID].moveP1))) == keccak256(abi.encodePacked(("Scissors")))  && keccak256(abi.encodePacked((_games[_gameID].moveP2))) == keccak256(abi.encodePacked(("Paper"))))
+            {
+                token.transfer(_games[_gameID].player1, _games[_gameID].bet*2);
+                winner = _games[_gameID].player1;
+            }
+            if(keccak256(abi.encodePacked((_games[_gameID].moveP1))) == keccak256(abi.encodePacked((_games[_gameID].moveP2)))) {
+                token.transfer(_games[_gameID].player1, _games[_gameID].bet);
+                token.transfer(_games[_gameID].player2, _games[_gameID].bet);
+            }   
+        }
+        emit GameFinished(_gameID, winner);
+    }
 }

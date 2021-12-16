@@ -12,9 +12,12 @@ There are many ways to implement this, so we leave that up to you.
 ## Stretch Goals
 Nice to have, but not necessary.
 - Make it a utility whereby any 2 people can decide to play against each other.  
+    People can use Game ID to join another persons game.
+
 - Reduce gas costs as much as possible.
-- Let players bet their previous winnings.  
-- How can you entice players to play, knowing that they may have their funds stuck in the contract if they face an uncooperative player?  
+- Let players bet their previous winnings.
+- How can you entice players to play, knowing that they may have their funds stuck in the contract if they face an uncooperative player? 
+    A deadline is entered by created of the game. If time exceeds and one of the players does not make any move, tokens return back to users.
 - Include any tests using Hardhat.
   
 Now fork this repo and do it!
@@ -22,3 +25,17 @@ Now fork this repo and do it!
 When you're done, please send an email to zak@slingshot.finance (if you're not applying through Homerun) with a link to your fork or join the [Slingshot Discord channel](https://discord.gg/JNUnqYjwmV) and let us know.  
   
 Happy hacking!
+
+To test the code first installations should be done
+
+```shell
+npm install --save-dev hardhat
+npm install --save-dev @nomiclabs/hardhat-waffle ethereum-waffle chai @nomiclabs/hardhat-ethers ethers
+npx hardhat install
+```
+
+Then code can be test by running
+
+```shell
+npx hardhat test
+```
